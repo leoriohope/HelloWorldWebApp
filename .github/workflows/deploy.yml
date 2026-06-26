@@ -1,15 +1,10 @@
-name: Deploy
+name: Promote
 
 on:
-  push:
-    branches:
-      - main
-      - develop
-      - "release/**"
   workflow_dispatch:
     inputs:
-      environment:
-        description: "Environment to deploy"
+      promote_to:
+        description: "Highest environment to promote this version to"
         required: true
         default: dev
         type: choice
@@ -17,62 +12,105 @@ on:
           - dev
           - uat
           - prod
+  push:
+    branches:
+      - main
 
 permissions:
   contents: write
 
 concurrency:
-  group: deploy-${{ github.ref }}
-  cancel-in-progress: true
+  group: promote-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
-  choose-environment:
-    name: Choose environment
+  deploy-dev:
+    name: Deploy Dev
     runs-on: ubuntu-latest
-    outputs:
-      app_environment: ${{ steps.resolve.outputs.app_environment }}
-    steps:
-      - name: Resolve deployment environment
-        id: resolve
-        shell: bash
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            echo "app_environment=${{ inputs.environment }}" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref }}" = "refs/heads/main" ]; then
-            echo "app_environment=prod" >> "$GITHUB_OUTPUT"
-          elif [ "${{ github.ref }}" = "refs/heads/develop" ]; then
-            echo "app_environment=dev" >> "$GITHUB_OUTPUT"
-          elif [[ "${{ github.ref }}" == refs/heads/release/* ]]; then
-            echo "app_environment=uat" >> "$GITHUB_OUTPUT"
-          else
-            echo "Unsupported branch: ${{ github.ref }}"
-            exit 1
-          fi
-
-  deploy:
-    name: Deploy to GitHub Pages
-    needs: choose-environment
-    runs-on: ubuntu-latest
-    environment: ${{ needs.choose-environment.outputs.app_environment }}
+    environment:
+      name: dev
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/dev/
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Build static bundle
+      - name: Build Dev bundle
         shell: bash
         run: |
-          mkdir -p "dist/${{ needs.choose-environment.outputs.app_environment }}"
-          cp index.html styles.css app.js "dist/${{ needs.choose-environment.outputs.app_environment }}/"
-          cat > "dist/${{ needs.choose-environment.outputs.app_environment }}/config.js" <<'EOF'
+          mkdir -p dist/dev
+          cp index.html styles.css app.js dist/dev/
+          cat > dist/dev/config.js <<'EOF'
           window.APP_CONFIG = {
-            environment: "${{ needs.choose-environment.outputs.app_environment }}"
+            environment: "dev"
           };
           EOF
 
-      - name: Publish environment folder
+      - name: Publish Dev
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: ./dist/${{ needs.choose-environment.outputs.app_environment }}
-          destination_dir: ${{ needs.choose-environment.outputs.app_environment }}
+          publish_dir: ./dist/dev
+          destination_dir: dev
+          keep_files: true
+
+  deploy-uat:
+    name: Deploy UAT
+    needs: deploy-dev
+    if: ${{ github.event_name == 'push' || inputs.promote_to == 'uat' || inputs.promote_to == 'prod' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: uat
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/uat/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build UAT bundle
+        shell: bash
+        run: |
+          mkdir -p dist/uat
+          cp index.html styles.css app.js dist/uat/
+          cat > dist/uat/config.js <<'EOF'
+          window.APP_CONFIG = {
+            environment: "uat"
+          };
+          EOF
+
+      - name: Publish UAT
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/uat
+          destination_dir: uat
+          keep_files: true
+
+  deploy-prod:
+    name: Deploy Prod
+    needs: deploy-uat
+    if: ${{ github.event_name == 'push' || inputs.promote_to == 'prod' }}
+    runs-on: ubuntu-latest
+    environment:
+      name: prod
+      url: https://${{ github.repository_owner }}.github.io/${{ github.event.repository.name }}/prod/
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Build Prod bundle
+        shell: bash
+        run: |
+          mkdir -p dist/prod
+          cp index.html styles.css app.js dist/prod/
+          cat > dist/prod/config.js <<'EOF'
+          window.APP_CONFIG = {
+            environment: "prod"
+          };
+          EOF
+
+      - name: Publish Prod
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./dist/prod
+          destination_dir: prod
           keep_files: true

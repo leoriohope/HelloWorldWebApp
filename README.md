@@ -1,12 +1,13 @@
 # Hello World Web App
 
-A tiny static web application with a complete GitHub delivery flow.
+A tiny static web application with a complete GitHub promotion flow.
 
 ## Environments
 
-- `develop` branch deploys to Dev.
-- `release/*` branches deploy to UAT.
-- `main` branch deploys to Prod.
+- Dev is the first deployment environment.
+- UAT runs only after Dev succeeds.
+- Prod runs only after UAT succeeds.
+- GitHub Environment approvals can pause promotion before UAT and Prod.
 
 With GitHub Pages enabled, the online URLs will look like this:
 
@@ -30,11 +31,22 @@ Open `index.html` in a browser. No dependency install is required.
    - `dev`
    - `uat`
    - `prod`
+6. Add required reviewers to `uat` and `prod` if you want manual approval gates.
 
-## Branch Flow
+## Promotion Flow
 
 ```text
-feature/* -> pull request -> develop -> dev
-develop -> release/vX.Y.Z -> uat
-release/vX.Y.Z -> main -> prod
+feature/* -> pull request -> main
+main -> Promote workflow -> dev -> uat -> prod
 ```
+
+## Deploy Like Harness
+
+1. Open **Actions** in GitHub.
+2. Select the **Promote** workflow.
+3. Click **Run workflow**.
+4. Choose the highest environment:
+   - `dev` deploys only Dev.
+   - `uat` deploys Dev, then UAT.
+   - `prod` deploys Dev, then UAT, then Prod.
+5. If `uat` or `prod` has required reviewers, GitHub pauses the workflow until it is approved.
