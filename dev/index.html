@@ -15,7 +15,7 @@
 
       <section class="game-layout" aria-label="Gomoku game">
         <div class="board-wrap">
-          <div id="board" class="board" role="grid" aria-label="Gomoku board"></div>
+          <canvas id="board" class="board" width="900" height="900" aria-label="Gomoku board"></canvas>
         </div>
 
         <aside class="status-panel" aria-label="Game controls">
@@ -30,6 +30,11 @@
           <div>
             <p class="panel-label">Game Status</p>
             <p id="status-message" class="status-message">Black moves first.</p>
+          </div>
+
+          <div class="mode-row" aria-label="Game mode">
+            <button id="human-mode-button" type="button">2 Players</button>
+            <button id="computer-mode-button" type="button">Vs Computer</button>
           </div>
 
           <div class="score-row" aria-label="Score">
