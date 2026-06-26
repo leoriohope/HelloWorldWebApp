@@ -7,9 +7,48 @@
     <link rel="stylesheet" href="./styles.css">
   </head>
   <body>
-    <main>
-      <p id="environment-label">Environment: local</p>
-      <h1>Hello World</h1>
+    <main class="game-shell">
+      <section class="game-header" aria-labelledby="page-title">
+        <p id="environment-label">Environment: local</p>
+        <h1 id="page-title">Hello World</h1>
+      </section>
+
+      <section class="game-layout" aria-label="Gomoku game">
+        <div class="board-wrap">
+          <div id="board" class="board" role="grid" aria-label="Gomoku board"></div>
+        </div>
+
+        <aside class="status-panel" aria-label="Game controls">
+          <div>
+            <p class="panel-label">Current Turn</p>
+            <div id="turn-label" class="turn-label">
+              <span class="stone-preview black"></span>
+              Black
+            </div>
+          </div>
+
+          <div>
+            <p class="panel-label">Game Status</p>
+            <p id="status-message" class="status-message">Black moves first.</p>
+          </div>
+
+          <div class="score-row" aria-label="Score">
+            <div>
+              <span class="score-label">Black</span>
+              <strong id="black-score">0</strong>
+            </div>
+            <div>
+              <span class="score-label">White</span>
+              <strong id="white-score">0</strong>
+            </div>
+          </div>
+
+          <div class="actions">
+            <button id="undo-button" type="button">Undo</button>
+            <button id="reset-button" type="button">New Game</button>
+          </div>
+        </aside>
+      </section>
     </main>
     <script src="./config.js"></script>
     <script src="./app.js"></script>
